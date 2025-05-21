@@ -1,0 +1,33 @@
+[
+  {
+    "operation": "clahe_enhancement",
+    "params": {
+      "clip_limit": 2.0,
+      "tile_grid_size": 8
+    }
+  },
+  {
+    "operation": "tv_denoise",
+    "params": {
+      "weight": 0.1,
+      "eps": 0.0002,
+      "max_iter": 200
+    }
+  },
+  {
+    "operation": "edge_aware_smoothing",
+    "params": {
+      "edge_threshold": 30,
+      "edge_dilate": 1
+    }
+  },
+  {
+    "operation": "advanced_edge_enhancement",
+    "params": {
+      "edge_threshold": 30,
+      "detail_preservation": 0.7,
+      "enhancement_strength": 10.0,
+      "smoothing_factor": 0.3
+    }
+  }
+]

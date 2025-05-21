@@ -1,0 +1,38 @@
+[
+  {
+    "operation": "nlm_denoise",
+    "params": {"h": 10, "template_window": 5, "search_window": 15}
+  },
+  {
+    "operation": "adjust_contrast_brightness",
+    "params": {"contrast": 1.0, "brightness": 10}
+  },
+  {
+    "operation": "gamma_correction",
+    "params": {"gamma": 1.0}
+  },
+  {
+    "operation": "clahe_enhancement",
+    "params": {"clip_limit": 4.5, "tile_grid_size": [8, 8]}
+  },
+  {
+    "operation": "edge_enhancement",
+    "params": {"strength": 1.2}
+  },
+  {
+    "operation": "bilateral_filter",
+    "params": {"d": 5, "sigma_color": 25, "sigma_space": 25}
+  },
+  {
+    "operation": "unsharp_mask", 
+    "params": {"amount": 2.5, "radius": 3}
+  },
+  {
+    "operation": "edge_aware_smoothing",
+    "params": {"edge_threshold": 25, "edge_dilate": 10}
+  },
+  {
+    "operation": "unsharp_mask",
+    "params": {"amount": 0.9, "radius": 5}
+  }
+]

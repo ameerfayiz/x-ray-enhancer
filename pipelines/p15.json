@@ -1,0 +1,65 @@
+[
+  {
+    "operation": "clahe_enhancement",
+    "params": {
+      "clip_limit": 2.0,
+      "tile_grid_size": 8
+    }
+  },
+  {
+    "operation": "tv_denoise",
+    "params": {
+      "weight": 0.2,
+      "eps": 9e-05,
+      "max_iter": 200
+    }
+  },
+  {
+    "operation": "advanced_edge_enhancement",
+    "params": {
+      "edge_threshold": 20,
+      "detail_preservation": 0.1,
+      "enhancement_strength": 2.0,
+      "smoothing_factor": 0.3
+    }
+  },
+  {
+    "operation": "overlay_original",
+    "params": {
+      "opacity": 0.4,
+      "blend_mode": "normal"
+    }
+  },
+  {
+    "operation": "advanced_edge_enhancement",
+    "params": {
+      "edge_threshold": 30,
+      "detail_preservation": 0.7,
+      "enhancement_strength": 4.0,
+      "smoothing_factor": 0.1
+    }
+  },
+  {
+    "operation": "advanced_edge_enhancement",
+    "params": {
+      "edge_threshold": 30,
+      "detail_preservation": 0.1,
+      "enhancement_strength": 12.0,
+      "smoothing_factor": 0.2
+    }
+  },
+  {
+    "operation": "clahe_enhancement",
+    "params": {
+      "clip_limit": 1.0,
+      "tile_grid_size": 16
+    }
+  },
+  {
+    "operation": "overlay_original",
+    "params": {
+      "opacity": 0.5,
+      "blend_mode": "normal"
+    }
+  }
+]

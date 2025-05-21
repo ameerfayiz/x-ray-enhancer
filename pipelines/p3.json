@@ -1,0 +1,56 @@
+[
+  {
+    "operation": "adjust_contrast_brightness",
+    "params": {
+      "contrast": 1.0,
+      "brightness": 10
+    }
+  },
+  {
+    "operation": "clahe_enhancement",
+    "params": {
+      "clip_limit": 2.0,
+      "tile_grid_size": 8
+    }
+  },
+  {
+    "operation": "adjust_contrast_brightness",
+    "params": {
+      "contrast": 1.1,
+      "brightness": 0
+    }
+  },
+  {
+    "operation": "clahe_enhancement",
+    "params": {
+      "clip_limit": 2.0,
+      "tile_grid_size": 8
+    }
+  },
+  {
+    "operation": "median_blur",
+    "params": {
+      "ksize": 7
+    }
+  },
+  {
+    "operation": "gamma_correction",
+    "params": {
+      "gamma": 1.1
+    }
+  },
+  {
+    "operation": "clahe_enhancement",
+    "params": {
+      "clip_limit": 0.5,
+      "tile_grid_size": 2
+    }
+  },
+  {
+    "operation": "unsharp_mask",
+    "params": {
+      "amount": 1.0,
+      "radius": 5
+    }
+  }
+]

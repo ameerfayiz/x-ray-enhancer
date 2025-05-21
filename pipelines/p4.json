@@ -1,0 +1,61 @@
+[
+  {
+    "operation": "clahe_enhancement",
+    "params": {
+      "clip_limit": 0.5,
+      "tile_grid_size": 9
+    }
+  },
+  {
+    "operation": "adjust_contrast_brightness",
+    "params": {
+      "contrast": 1.0,
+      "brightness": 10
+    }
+  },
+  {
+    "operation": "gamma_correction",
+    "params": {
+      "gamma": 1.0
+    }
+  },
+  {
+    "operation": "clahe_enhancement",
+    "params": {
+      "clip_limit": 4.5,
+      "tile_grid_size": [
+        8,
+        8
+      ]
+    }
+  },
+  {
+    "operation": "edge_enhancement",
+    "params": {
+      "strength": 1.2
+    }
+  },
+  {
+    "operation": "bilateral_filter",
+    "params": {
+      "d": 5,
+      "sigma_color": 25,
+      "sigma_space": 25
+    }
+  },
+  {
+    "operation": "unsharp_mask",
+    "params": {
+      "amount": 0.9,
+      "radius": 5
+    }
+  },
+  {
+    "operation": "nlm_denoise",
+    "params": {
+      "h": 8.0,
+      "template_window": 7,
+      "search_window": 21
+    }
+  }
+]
