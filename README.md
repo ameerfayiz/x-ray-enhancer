@@ -187,6 +187,7 @@ The application provides a comprehensive suite of image processing algorithms to
   - Unsharp Mask - Sharpens details in the image
   - Advanced Edge Enhancement - Specialized algorithm for dental structure visualization
   - Overlay Original Image - Compare processed results with original
+  - Invert image with strength changable
 
 - Additional features:
   - Image loading and saving
