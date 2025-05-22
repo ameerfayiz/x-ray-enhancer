@@ -8,7 +8,7 @@ from skimage.restoration import denoise_tv_chambolle
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QLabel, QSlider, QComboBox, QPushButton, QFileDialog, QGroupBox,
                             QGridLayout, QFrame, QListWidget, QAbstractItemView, QDoubleSpinBox,
-                            QSpinBox, QCheckBox, QSplitter, QMessageBox, QListWidgetItem, QScrollArea)
+                            QSpinBox, QCheckBox, QSplitter, QMessageBox, QListWidgetItem, QScrollArea,QDialog)
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, QSize
 from PyQt5.QtGui import QImage, QPixmap, QDrag, QIcon
 
@@ -34,6 +34,7 @@ class DentalXRayProcessor:
             "tv_denoise": self.tv_denoise,
             "advanced_edge_enhancement": self.advanced_edge_enhancement,
             "overlay_original": self.overlay_original,
+            "invert": self.invert,
         }
         
         # parameter specs for each operation
@@ -116,6 +117,10 @@ class DentalXRayProcessor:
                             "default": "normal", 
                             "description": "Method used to blend the original image"}
             },
+            "invert": {
+                "strength": {"type": "double", "min": 0.0, "max": 1.0, "default": 1.0, "decimals": 2,
+                            "description": "Strength of the inversion effect (0-1)"}
+            },
         }
         
         # names for operations
@@ -132,6 +137,7 @@ class DentalXRayProcessor:
             "tv_denoise": "Total Variation Denoising",
             "advanced_edge_enhancement": "Advanced Edge Enhancement",
             "overlay_original": "Overlay Original Image",
+            "invert": "Invert Image",
         }
     
     def add_operation(self, operation_name, params=None):
@@ -326,6 +332,23 @@ class DentalXRayProcessor:
         gaussian = cv2.GaussianBlur(image, (radius, radius), 0)
         return cv2.addWeighted(image, 1.0 + amount, gaussian, -amount, 0)
     
+    def invert(self, image, strength=1.0):
+        """
+        Invert the image (negative effect).
+        
+        Args:
+            image: Input image
+            strength: Strength of the inversion effect (0-1)
+        """
+        # Full inversion
+        inverted = 255 - image
+        
+        # Blend with original based on strength
+        if strength < 1.0:
+            return cv2.addWeighted(image, 1.0 - strength, inverted, strength, 0)
+        else:
+            return inverted
+
     def edge_aware_smoothing(self, image, edge_threshold=30, edge_dilate=1):
         """
         Apply edge-aware smoothing (preserves edges, smooths non-edge areas).
@@ -573,6 +596,56 @@ class ReorderableListWidget(QListWidget):
         # Notify parent that items have been reordered
         self.parent().on_pipeline_reordered()
 
+class FullScreenImageDialog(QDialog):
+    """Dialog to display an image in full screen."""
+    
+    def __init__(self, image, parent=None):
+        super().__init__(parent)
+        self.image = image
+        self.init_ui()
+        
+    def init_ui(self):
+        self.setWindowTitle("Full Screen Image")
+        self.setWindowState(Qt.WindowFullScreen)
+        
+        # Main layout
+        layout = QVBoxLayout(self)
+        
+        # Image label
+        self.image_label = QLabel()
+        self.image_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.image_label)
+        
+        # Display the image
+        self.display_image()
+        
+        # Instructions label
+        instructions = QLabel("Press ESC or click anywhere to exit")
+        instructions.setAlignment(Qt.AlignCenter)
+        instructions.setStyleSheet("color: white; background-color: rgba(0, 0, 0, 128); padding: 5px;")
+        layout.addWidget(instructions)
+        
+    def display_image(self):
+        if self.image is not None:
+            # Convert to QImage
+            height, width = self.image.shape
+            bytes_per_line = width
+            q_img = QImage(self.image.data, width, height, bytes_per_line, QImage.Format_Grayscale8)
+            
+            # Convert to QPixmap and scale to fit screen
+            pixmap = QPixmap.fromImage(q_img)
+            screen_size = QApplication.desktop().screenGeometry().size()
+            scaled_pixmap = pixmap.scaled(screen_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            
+            self.image_label.setPixmap(scaled_pixmap)
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.close()
+    
+    def mousePressEvent(self, event):
+        self.close()
+
 
 class DentalXRayEnhancerGUI(QMainWindow):
     """
@@ -755,6 +828,23 @@ class DentalXRayEnhancerGUI(QMainWindow):
         self.processed_label.setScaledContents(False)
         self.processed_label.setFrameShape(QFrame.Box)
         processed_layout.addWidget(self.processed_label)
+        
+        # Add button controls for processed image
+        processed_buttons_layout = QHBoxLayout()
+        
+        self.full_screen_btn = QPushButton("Full Screen")
+        self.full_screen_btn.setIcon(QIcon.fromTheme("view-fullscreen"))
+        self.full_screen_btn.clicked.connect(self.show_full_screen)
+        self.full_screen_btn.setEnabled(False)
+        processed_buttons_layout.addWidget(self.full_screen_btn)
+        
+        self.save_now_btn = QPushButton("Save Now")
+        self.save_now_btn.setIcon(QIcon.fromTheme("document-save"))
+        self.save_now_btn.clicked.connect(self.save_processed_image)
+        self.save_now_btn.setEnabled(False)
+        processed_buttons_layout.addWidget(self.save_now_btn)
+        
+        processed_layout.addLayout(processed_buttons_layout)
         image_preview_layout.addWidget(processed_group)
         
         preview_layout.addLayout(image_preview_layout)
@@ -766,6 +856,13 @@ class DentalXRayEnhancerGUI(QMainWindow):
         # Show the window
         self.show()
     
+    def show_full_screen(self):
+        """Show the processed image in full screen."""
+        if self.processed_image is not None:
+            full_screen_dialog = FullScreenImageDialog(self.processed_image, self)
+            full_screen_dialog.exec_()  # This will work now with QDialog
+
+
     def add_default_pipeline(self):
         """Add a default edge-focused pipeline with TV denoising."""
         edge_pipeline = [
@@ -833,21 +930,48 @@ class DentalXRayEnhancerGUI(QMainWindow):
                 QMessageBox.critical(self, "Error", f"Error loading image: {str(e)}")
     
     def save_processed_image(self):
-        """Save the processed image."""
+        """save the processed image with lossless or highest quality settings."""
         if self.processed_image is None:
             QMessageBox.warning(self, "Warning", "No processed image to save.")
             return
-            
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Image", "", "PNG Files (*.png);;JPEG Files (*.jpg);;TIFF Files (*.tif);;All Files (*)"
+                
+        file_path, selected_filter = QFileDialog.getSaveFileName(
+            self, "Save Image", "", 
+            "TIFF Files (*.tif);;PNG Files (*.png);;BMP Files (*.bmp);;JPEG Files (*.jpg);;All Files (*)"
         )
         
         if file_path:
             try:
-                cv2.imwrite(file_path, self.processed_image)
-                self.status_label.setText(f"Saved processed image to: {os.path.basename(file_path)}")
+                if file_path.lower().endswith(('.jpg', '.jpeg')):
+                    cv2.imwrite(file_path, self.processed_image, [cv2.IMWRITE_JPEG_QUALITY, 100])
+                    self.status_label.setText(f"Saved processed image as JPEG (highest quality)")
+                    
+                elif file_path.lower().endswith('.png'):
+                    cv2.imwrite(file_path, self.processed_image, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+                    self.status_label.setText(f"Saved processed image as lossless PNG")
+                    
+                elif file_path.lower().endswith(('.tif', '.tiff')):
+                    cv2.imwrite(file_path, self.processed_image)
+                    self.status_label.setText(f"Saved processed image as lossless TIFF")
+                    
+                elif file_path.lower().endswith('.bmp'):
+                    cv2.imwrite(file_path, self.processed_image)
+                    self.status_label.setText(f"Saved processed image as uncompressed BMP")
+                    
+                else:
+                    cv2.imwrite(file_path, self.processed_image)
+                    self.status_label.setText(f"Saved processed image")
+                    
+                self.status_label.setText(f"{self.status_label.text()} to: {os.path.basename(file_path)}")
+                
+                # file size information
+                file_size_bytes = os.path.getsize(file_path)
+                file_size_mb = file_size_bytes / (1024 * 1024)
+                self.status_label.setText(f"{self.status_label.text()} (Size: {file_size_mb:.2f} MB)")
+                
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Error saving image: {str(e)}")
+
     
     def load_pipeline(self):
         """Load a pipeline from a JSON file."""
@@ -1141,16 +1265,18 @@ class DentalXRayEnhancerGUI(QMainWindow):
         """Handle completion of image processing."""
         self.processed_image = result
         
-        # the processed image
+        # Display the processed image
         self.display_image(self.processed_image, self.processed_label)
         
         # Re-enable process button
         self.process_btn.setEnabled(True)
         
-        # eenable save button
+        # Enable save and full screen buttons
         self.save_image_btn.setEnabled(True)
+        self.save_now_btn.setEnabled(True)
+        self.full_screen_btn.setEnabled(True)
         
-        # set status
+        # Set status
         self.status_label.setText("Processing complete")
     
     def display_image(self, cv_img, label):
